@@ -2,17 +2,17 @@
 name = "lib-ml"
 version = "0.1.0"
 description = "A library for pre-processing data used in machine learning models"
-authors = ["Jasper Bruin <jasper.bruin@domain.com>"]
+authors = ["Jasper Bruin <j.jasperbruin@tudelft.nl>"]
 readme = "README.md"
-repository = "https://github.com/your-username/lib-ml"
+repository = "https://github.com/remla24-team3/lib-ml"
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 numpy = "^1.23.4"
+pylint = "3.1.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
 flake8 = "^5.0.4"
 
 [build-system]

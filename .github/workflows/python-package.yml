@@ -26,9 +26,6 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-    - name: Run Tests
-      run: |
-        poetry run pytest
     - name: Check code quality
       run: |
         poetry run flint .

@@ -2,7 +2,7 @@
 name = "lib-ml"
 version = "0.1.0"
 description = "A library for pre-processing data used in machine learning models"
-authors = ["Jasper Bruin <jasper.bruin@domain.com>"]
+authors = ["Jasper Bruin <j.jasperbruin@tudelft.nl"]
 readme = "README.md"
 repository = "https://github.com/remla24-team3/lib-ml"
 license = "MIT"

@@ -1,6 +1,7 @@
 # lib_ml/preprocessing.py
 
-# pylint: disable=W0012,E0611,E0401
+# pylint: disable=W0012,E0611,E0401,R0914,C0103
+
 """
 Tokenization utilities for text data preprocessing.
 """
@@ -31,6 +32,7 @@ def read_data(file_path):
 
 
 def preprocess_data():
+    """Preprocess the data and save the tokenized data to disk."""
     train = read_data(INPUT_DIR + "test.txt")[1:]
     raw_x_train = [line.split("\t")[1] for line in train]
     raw_y_train = [line.split("\t")[0] for line in train]

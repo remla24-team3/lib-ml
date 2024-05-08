@@ -36,7 +36,7 @@ jobs:
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
         poetry build
-        poetry publish --username ${{ secrets.PYPI_USERNAME }} --password ${{ secrets.PYPI_PASSWORD }}
+        poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
     - name: Clean up
       if: always()
       run: |

@@ -11,6 +11,9 @@ license = "MIT"
 python = ">=3.9,<3.13"
 numpy = "^1.23.4"
 pylint = "3.1.0"
+keras = "^3.3.3"
+tensorflow = "^2.16.1"
+scikit-learn = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^5.0.4"

@@ -45,6 +45,8 @@ class Model:
         """
         sequence_length = 200
         tokenized = pad_sequences(
-            self.tokenizer.texts_to_sequences(url_list), maxlen=sequence_length)
+            self.tokenizer.texts_to_sequences(url_list),
+            maxlen=sequence_length
+        )
         prediction = self.model.predict(tokenized)
         return self.encoder.inverse_transform(prediction.round().astype(int))

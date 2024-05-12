@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.head_ref }}  # Important for pull requests, defaults to the branch or commit that triggered the workflow for pushes
+        ref: ${{ github.head_ref }}
 
     - name: Set up Python
       uses: actions/setup-python@v3
@@ -48,34 +48,36 @@ jobs:
       run: |
         flake8 .
 
-    - name: Bump version and tag
+    - name: Check if version exists on PyPI
+      id: check-version
       run: |
-        git fetch origin
-        LOCAL_COMMIT=$(git rev-parse @)
-        REMOTE_COMMIT=$(git rev-parse "@{u}")
-        BASE_COMMIT=$(git merge-base @ "@{u}")
-        if [ $LOCAL_COMMIT = $REMOTE_COMMIT ]; then
-          poetry version minor
-          NEW_VERSION=$(poetry version --short)
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add pyproject.toml
-          git commit -m "Bump version to $NEW_VERSION"
-          git push origin "${{ github.ref_name }}"
-          git tag "v$NEW_VERSION"
-          git push origin "v$NEW_VERSION"
-        elif [ $LOCAL_COMMIT = $BASE_COMMIT ]; then
-          echo "Need to pull, there are remote changes."
-          exit 1
+        CURRENT_VERSION=$(poetry version --short)
+        if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
+          echo "Version $CURRENT_VERSION already exists on PyPI."
+          echo "::set-output name=exists::true"
         else
-          echo "Local and remote branches have diverged."
-          exit 1
+          echo "Version $CURRENT_VERSION does not exist on PyPI."
+          echo "::set-output name=exists::false"
         fi
+
+    - name: Bump version and tag
+      if: steps.check-version.outputs.exists == 'false'
+      run: |
+        poetry version patch
+        NEW_VERSION=$(poetry version --short)
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add pyproject.toml
+        git commit -m "Bump version to $NEW_VERSION"
+        git checkout -B "${{ github.ref_name }}"
+        git push origin "${{ github.ref_name }}"
+        git tag "v$NEW_VERSION"
+        git push origin "v$NEW_THRESHOLD_VERSION"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
     - name: Build and publish to PyPI
+      if: steps.check-version.outputs.exists == 'false'
       run: |
         poetry build
         poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}

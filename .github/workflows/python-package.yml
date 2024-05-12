@@ -50,24 +50,30 @@ jobs:
 
     - name: Bump version and tag
       run: |
-        poetry version minor
-        NEW_VERSION=$(poetry version --short)
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add pyproject.toml
-        git commit -m "Bump version to $NEW_VERSION"
-        git checkout -B "${{ github.ref_name }}"
-        git pull --rebase origin "${{ github.ref_name }}"
-        if [ $? -eq 0 ]; then
+        git fetch origin
+        LOCAL_COMMIT=$(git rev-parse @)
+        REMOTE_COMMIT=$(git rev-parse "@{u}")
+        BASE_COMMIT=$(git merge-base @ "@{u}")
+        if [ $LOCAL_COMMIT = $REMOTE_COMMIT ]; then
+          poetry version minor
+          NEW_VERSION=$(poetry version --short)
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add pyproject.toml
+          git commit -m "Bump version to $NEW_VERSION"
           git push origin "${{ github.ref_name }}"
           git tag "v$NEW_VERSION"
           git push origin "v$NEW_VERSION"
+        elif [ $LOCAL_COMMIT = $BASE_COMMIT ]; then
+          echo "Need to pull, there are remote changes."
+          exit 1
         else
-          echo "Failed to rebase, please check for conflicts or remote changes."
+          echo "Local and remote branches have diverged."
           exit 1
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Build and publish to PyPI
       run: |

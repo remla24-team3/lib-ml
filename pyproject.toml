@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lib-ml-group3"
-version = "0.3.1"
+version = "0.3.0"
 description = "A library for pre-processing data used in machine learning models"
 authors = ["Jasper Bruin <j.jasperbruin@tudelft.nl>"]
 readme = "README.md"
@@ -11,6 +11,9 @@ license = "MIT"
 python = ">=3.9,<3.13"
 numpy = "^1.23.4"
 pylint = "3.1.0"
+keras = "^3.3.3"
+tensorflow = "^2.16.1"
+scikit-learn = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^5.0.4"

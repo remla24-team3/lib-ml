@@ -41,13 +41,18 @@ jobs:
         flake8 .
 
     - name: Bump version and tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        poetry version minor
+        poetry version patch
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -am "Bump version"
-        git tag v$(poetry version -s)
-        git push origin HEAD --tags
+        git push --set-upstream origin HEAD
+        NEW_TAG="v$(poetry version -s)"
+        git tag $NEW_TAG
+        git push origin $NEW_TAG
+
 
     - name: Build and publish to PyPI
       run: |

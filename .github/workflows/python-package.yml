@@ -50,7 +50,7 @@ jobs:
 
     - name: Bump version and tag
       run: |
-        poetry version patch
+        poetry version minor
         NEW_VERSION=$(poetry version --short)
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"

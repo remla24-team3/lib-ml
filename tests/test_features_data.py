@@ -3,6 +3,11 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
+import dvc.api
+
+PARAMS = dvc.api.params_show()
+INPUT_DIR = PARAMS["data_folder"]
+OUTPUT_DIR = PARAMS["tokenized_folder"]
 
 def read_data(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
@@ -12,9 +17,9 @@ def read_data(file_path):
 def data():
     # TODO: Update these paths to point to actual dataset files
     # TODO: or replace this with a function that loads own dataset
-    train_file = "/path/to/your/train.txt"
-    val_file = "/path/to/your/val.txt"
-    test_file = "/path/to/your/test.txt"
+    train_file = read_data(INPUT_DIR + "train.txt")[1:]
+    val_file = read_data(INPUT_DIR + "val.txt")
+    test_file = read_data(INPUT_DIR + "test.txt")
 
     # Read data
     train = read_data(train_file)[1:]

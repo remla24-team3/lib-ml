@@ -32,7 +32,7 @@ def read_data(file_path):
 
 def preprocess_data():
     """Preprocess the data and save the tokenized data to disk."""
-    train = read_data(INPUT_DIR + "test.txt")[1:]
+    train = read_data(INPUT_DIR + "train.txt")[1:]
     raw_x_train = [line.split("\t")[1] for line in train]
     raw_y_train = [line.split("\t")[0] for line in train]
 

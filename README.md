@@ -31,6 +31,14 @@ preprocess_data()
 
 The `preprocess_data()` function reads data from specified input directories, processes the text and labels, and saves the tokenized and encoded outputs to designated output directories.
 
+## Testing
+
+To run the tests for `lib-ml`, use the following command:
+
+```bash
+poetry run pytest tests/
+```
+
 ## License
 
 `lib-ml` is open source software [licensed as MIT](LICENSE).

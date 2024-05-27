@@ -1,4 +1,4 @@
-#pylint disable=all
+# pylint: disable=all
 import pytest
 import numpy as np
 import pandas as pd

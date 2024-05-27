@@ -4,36 +4,55 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
 
-# Sample data for testing
-sample_texts = ["sample text", "another example", "more data to test"]
-sample_labels = ["phishing", "legitimate", "phishing"]
-
-# Tokenizer setup
-tokenizer = Tokenizer(lower=True, char_level=True, oov_token='-n-')
-tokenizer.fit_on_texts(sample_texts)
-
-# Label Encoder setup
-encoder = LabelEncoder()
-encoder.fit(sample_labels)
+def read_data(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        return [line.strip() for line in file.readlines()]
 
 @pytest.fixture
 def data():
+    # TODO: Update these paths to point to actual dataset files
+    # TODO: or replace this with a function that loads own dataset
+    train_file = "/path/to/your/train.txt"
+    val_file = "/path/to/your/val.txt"
+    test_file = "/path/to/your/test.txt"
+
+    # Read data
+    train = read_data(train_file)[1:]
+    raw_x_train = [line.split("\t")[1] for line in train]
+    raw_y_train = [line.split("\t")[0] for line in train]
+
+    val = read_data(val_file)
+    raw_x_val = [line.split("\t")[1] for line in val]
+    raw_y_val = [line.split("\t")[0] for line in val]
+
+    test = read_data(test_file)
+    raw_x_test = [line.split("\t")[1] for line in test]
+    raw_y_test = [line.split("\t")[0] for line in test]
+
+    # Tokenizer setup
+    tokenizer = Tokenizer(lower=True, char_level=True, oov_token='-n-')
+    tokenizer.fit_on_texts(raw_x_train + raw_x_val + raw_x_test)
+
+    # Label Encoder setup
+    encoder = LabelEncoder()
+    encoder.fit(raw_y_train)
+
     return {
-        "texts": sample_texts,
-        "labels": sample_labels,
+        "texts": raw_x_train + raw_x_val + raw_x_test,
+        "labels": raw_y_train + raw_y_val + raw_y_test,
         "tokenizer": tokenizer,
         "encoder": encoder
     }
 
 def test_tokenizer(data):
     sequences = data["tokenizer"].texts_to_sequences(data["texts"])
-    assert len(sequences) == 3, "The number of sequences should match the number of input texts."
+    assert len(sequences) == len(data["texts"]), "The number of sequences should match the number of input texts."
     assert len(data["tokenizer"].word_index) > 0, "The tokenizer should have a non-empty word index."
 
 def test_label_encoder(data):
     transformed_labels = data["encoder"].transform(data["labels"])
-    assert len(transformed_labels) == 3, "The number of transformed labels should match the number of input labels."
-    assert len(data["encoder"].classes_) == 2, "There should be two unique classes."
+    assert len(transformed_labels) == len(data["labels"]), "The number of transformed labels should match the number of input labels."
+    assert len(data["encoder"].classes_) > 1, "There should be more than one unique class."
 
 def test_feature_distribution(data):
     # Test that the distributions of each feature match expectations

@@ -18,61 +18,49 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.head_ref }}
 
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    - name: Install poetry
+    - name: Install and configure Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python -
-
-    - name: Configure Poetry
-      run: |
         poetry config virtualenvs.create false
 
-    - name: Install dependencies
+    - name: Install dependencies and run linting
       run: |
         poetry install
-
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
-
-    - name: Analysing the code with Flake8
-      run: |
-        flake8 .
+        poetry run pylint $(git ls-files '*.py')
+        poetry run flake8 .
 
     - name: Check if version exists on PyPI
       id: check-version
       run: |
-        CURRENT_VERSION=$(poetry version --short)
-        if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
-          echo "Version $CURRENT_VERSION already exists on PyPI."
+        VERSION=$(poetry version --short)
+        if curl --silent --fail "https://pypi.org/project/lib-ml-group3/$VERSION/"; then
+          echo "Version $VERSION already exists on PyPI."
           echo "::set-output name=exists::true"
         else
-          echo "Version $CURRENT_VERSION does not exist on PyPI."
+          echo "Version $VERSION does not exist on PyPI."
           echo "::set-output name=exists::false"
-        fi
 
-    - name: Bump version and tag
+    - name: Bump version and push tag
       if: steps.check-version.outputs.exists == 'false'
       run: |
         poetry version patch
-        NEW_VERSION=$(poetry version --short)
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        VERSION=$(poetry version --short)
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
         git add pyproject.toml
-        git commit -m "Bump version to $NEW_VERSION"
-        git checkout -B "${{ github.ref_name }}"
-        git push origin "${{ github.ref_name }}"
-        git tag "v$NEW_VERSION"
-        git push origin "v$NEW_THRESHOLD_VERSION"
+        git commit -m "Bump version to $VERSION"
+        git tag "v$VERSION"
+        git push origin main --tags
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -83,6 +71,5 @@ jobs:
         poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
 
     - name: Clean up
-      if: always()
       run: |
         rm -rf dist

@@ -7,6 +7,7 @@ Tokenization utilities for text data preprocessing.
 
 import os
 import pickle
+import re
 import dvc.api
 
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -16,6 +17,14 @@ from sklearn.preprocessing import LabelEncoder
 PARAMS = dvc.api.params_show()
 INPUT_DIR = PARAMS["data_folder"]
 OUTPUT_DIR = PARAMS["tokenized_folder"]
+SENSITIVE_PATTERNS = re.compile(r"(@|token|session|user|userid|"
+                                r"password|auth|files|pro)", re.IGNORECASE)
+
+
+def remove_sensitive_info(text):
+    """Remove sensitive information from the text based on
+    the SENSITIVE_PATTERNS."""
+    return SENSITIVE_PATTERNS.sub("[REDACTED]", text)
 
 
 def pickle_save(obj, path):
@@ -33,15 +42,16 @@ def read_data(file_path):
 def preprocess_data():
     """Preprocess the data and save the tokenized data to disk."""
     train = read_data(INPUT_DIR + "train.txt")[1:]
-    raw_x_train = [line.split("\t")[1] for line in train]
+    raw_x_train = [remove_sensitive_info(line.split("\t")[1]) for
+                   line in train]
     raw_y_train = [line.split("\t")[0] for line in train]
 
     test = read_data(INPUT_DIR + "test.txt")
-    raw_x_test = [line.split("\t")[1] for line in test]
+    raw_x_test = [remove_sensitive_info(line.split("\t")[1]) for line in test]
     raw_y_test = [line.split("\t")[0] for line in test]
 
     val = read_data(INPUT_DIR + "val.txt")
-    raw_x_val = [line.split("\t")[1] for line in val]
+    raw_x_val = [remove_sensitive_info(line.split("\t")[1]) for line in val]
     raw_y_val = [line.split("\t")[0] for line in val]
 
     tokenizer = Tokenizer(lower=True, char_level=True, oov_token='-n-')

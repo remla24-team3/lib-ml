@@ -1,17 +1,27 @@
-# pylint: disable=all
-import pytest
+"""
+This module contains tests for the features of the data.
+"""
+
+# pylint: disable=W0511, E0401, E0611, W0621
+
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
 
+INPUT_DIR = "path/to/input/"  # Add this line to define INPUT_DIR
+
 
 def read_data(file_path):
+    """Read data from a file and return a list of lines."""
     with open(file_path, "r", encoding="utf-8") as file:
         return [line.strip() for line in file.readlines()]
 
+
 @pytest.fixture
 def data():
+    """Fixture for loading and processing data."""
     # TODO: Replace this with subset of data
     train_file = read_data(INPUT_DIR + "train.txt")[1:]
     val_file = read_data(INPUT_DIR + "val.txt")
@@ -45,51 +55,73 @@ def data():
         "encoder": encoder
     }
 
+
 def test_tokenizer(data):
+    """Test the tokenizer."""
     sequences = data["tokenizer"].texts_to_sequences(data["texts"])
-    assert len(sequences) == len(data["texts"]), "The number of sequences should match the number of input texts."
-    assert len(data["tokenizer"].word_index) > 0, "The tokenizer should have a non-empty word index."
+    assert len(sequences) == len(data["texts"]), (
+        "The number of sequences should match the number of input texts.")
+    assert len(data["tokenizer"].word_index) > 0, (
+        "The tokenizer should have a non-empty word index.")
+
 
 def test_label_encoder(data):
+    """Test the label encoder."""
     transformed_labels = data["encoder"].transform(data["labels"])
-    assert len(transformed_labels) == len(data["labels"]), "The number of transformed labels should match the number of input labels."
-    assert len(data["encoder"].classes_) > 1, "There should be more than one unique class."
+    assert len(transformed_labels) == len(data["labels"]), (
+        "The number of transformed labels "
+        "should match the number of input labels.")
+    assert len(data["encoder"].classes_) > 1, (
+        "There should be more than one unique class.")
+
 
 def test_feature_distribution(data):
-    # Test that the distributions of each feature match expectations
+    """Test that the distributions of each feature match expectations."""
     sequences = data["tokenizer"].texts_to_sequences(data["texts"])
     sequence_lengths = [len(seq) for seq in sequences]
-    assert np.mean(sequence_lengths) > 0, "The mean sequence length should be greater than zero."
+    assert np.mean(sequence_lengths) > 0, (
+        "The mean sequence length should be greater than zero.")
+
 
 def test_feature_target_relationship(data):
-    # Test the relationship between each feature and the target
+    """Test the relationship between each feature and the target."""
     sequences = data["tokenizer"].texts_to_sequences(data["texts"])
     transformed_labels = data["encoder"].transform(data["labels"])
-    assert len(sequences) == len(transformed_labels), "The number of sequences should match the number of labels."
+    assert len(sequences) == len(transformed_labels), (
+        "The number of sequences should match the number of labels.")
+
 
 def test_feature_pairwise_correlations():
-    # Test pairwise correlations between individual features
+    """Test pairwise correlations between individual features."""
     df = pd.DataFrame({
         'feature1': np.random.rand(100),
         'feature2': np.random.rand(100)
     })
     correlation_matrix = df.corr()
-    assert correlation_matrix.shape == (2, 2), "The correlation matrix should be 2x2."
-    assert -1 <= correlation_matrix.loc['feature1', 'feature2'] <= 1, "Correlation should be between -1 and 1."
+    assert correlation_matrix.shape == (2, 2), (
+        "The correlation matrix should be 2x2.")
+    assert -1 <= correlation_matrix.loc['feature1', 'feature2'] <= 1, (
+        "Correlation should be between -1 and 1.")
+
 
 def test_feature_cost(data):
-    # Test the cost of each feature (e.g., latency, memory usage)
+    """Test the cost of each feature (e.g., latency, memory usage)."""
     feature_size = len(data["tokenizer"].word_index)
-    assert feature_size < 10000, "The size of the feature index should be reasonable for memory usage."
+    assert feature_size < 10000, (
+        "The size of the feature index should be reasonable for memory usage.")
+
 
 def test_feature_privacy(data):
-    # Exclude the OOV token from the privacy check
+    """Test privacy aspects of the tokenizer's word index."""
     word_index = data["tokenizer"].word_index
     words = [word for word in word_index.keys() if word != '-n-']
-    assert all('-' not in word for word in words), "Privacy checks failed in tokenizer word index."
+    assert all('-' not in word for word in words), (
+        "Privacy checks failed in tokenizer word index.")
+
 
 def test_feature_code():
-    # Test all code that creates input features
+    """Test all code that creates input features."""
     sample_dates = ["2020-01-01", "2021-01-01"]
     cleaned_dates = [pd.to_datetime(date) for date in sample_dates]
-    assert all(isinstance(date, pd.Timestamp) for date in cleaned_dates), "Date cleaning should produce Timestamp objects."
+    assert all(isinstance(date, pd.Timestamp) for date in cleaned_dates), (
+        "Date cleaning should produce Timestamp objects.")

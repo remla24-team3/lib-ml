@@ -22,6 +22,45 @@ jobs:
       with:
         fetch-depth: 0
         ref: ${{ github.head_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }} 
+    
+    - name: Extract version information
+        id: vars
+        run: |
+          CURRENT_TAG=$((git tag -l --sort=-v:refname | head -n 1) || echo "v0.0.0")
+          CURRENT_TAG=${CURRENT_TAG#v}
+          IFS='.' read -ra ADDR <<< "$CURRENT_TAG"
+          
+          PATCH=$((ADDR[2] + 1))
+          VERSION="${ADDR[0]}.${ADDR[1]}.$PATCH"
+          
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="v$VERSION"
+          elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
+            VERSION="v$VERSION"
+          elif [[ "${GITHUB_REF}" == refs/heads/beta/* ]]; then
+            VERSION="v$VERSION-beta-$(date +%Y%m%d)"
+          else
+            VERSION="v$VERSION"
+          fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      
+    - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ env.VERSION }}
+          REPO: ${{ github.repository }}
+        run: |
+          IS_PRERELEASE=false
+          if [[ $VERSION == *-* ]]; then
+            IS_PRERELEASE=true
+          fi
+          gh release create "$VERSION" \
+              --repo="$REPO" \
+              --title="${REPO#*/} ${VERSION#v}" \
+              --generate-notes \
+              $([[ $IS_PRERELEASE == true ]] && echo "--prerelease")
 
     - name: Set up Python
       uses: actions/setup-python@v3
@@ -51,7 +90,7 @@ jobs:
     - name: Check if version exists on PyPI
       id: check-version
       run: |
-        CURRENT_VERSION=$(poetry version --short)
+        CURRENT_VERSION=${{ env.VERSION }}
         if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
           echo "Version $CURRENT_VERSION already exists on PyPI."
           echo "::set-output name=exists::true"

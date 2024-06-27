@@ -105,22 +105,6 @@ jobs:
             echo "::set-output name=exists::false"
           fi
 
-      - name: Bump version and tag
-        if: steps.check-version.outputs.exists == 'false'
-        run: |
-          poetry version patch
-          NEW_VERSION=$(poetry version --short)
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add pyproject.toml
-          git commit -m "Bump version to $NEW_VERSION"
-          git checkout -B "${{ github.ref_name }}"
-          git push origin "${{ github.ref_name }}"
-          git tag "v$NEW_VERSION"
-          git push origin "v$NEW_THRESHOLD_VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and publish to PyPI
         if: steps.check-version.outputs.exists == 'false'
         run: |

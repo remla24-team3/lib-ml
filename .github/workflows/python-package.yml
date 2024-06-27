@@ -118,6 +118,8 @@ jobs:
           git push origin "${{ github.ref_name }}"
           poetry build
           poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean up
         if: always()

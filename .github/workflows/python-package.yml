@@ -96,7 +96,7 @@ jobs:
       - name: Check if version exists on PyPI
         id: check-version
         run: |
-          CURRENT_VERSION=${{ env.VERSION }}
+          CURRENT_VERSION=$(poetry version --short)
           if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
             echo "Version $CURRENT_VERSION already exists on PyPI."
             echo "::set-output name=exists::true"

@@ -115,7 +115,8 @@ jobs:
           git add pyproject.toml
           git commit -m "Bump version to $NEW_VERSION"
           git checkout -B "${{ github.ref_name }}"
-          git pull origin "${{ github.ref_name }}" --rebase
+          git pull origin "${{ github.ref_name }}" --rebase || echo "No changes to rebase"
+          git merge --strategy-option theirs || echo "No conflicts to resolve"
           git push origin "${{ github.ref_name }}"
           poetry build
           poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}

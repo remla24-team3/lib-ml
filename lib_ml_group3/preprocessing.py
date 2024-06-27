@@ -55,6 +55,7 @@ def preprocess_data():
     x_test = pad_sequences(tokenizer.texts_to_sequences(raw_x_test),
                            maxlen=SEQUENCE_LENGTH)
 
+    # Create output directory
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 

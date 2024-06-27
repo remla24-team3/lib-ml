@@ -109,7 +109,6 @@ jobs:
         if: steps.check-version.outputs.exists == 'false'
         run: |
           poetry version patch
-          poetry version patch
           poetry build
           poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
 

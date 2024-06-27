@@ -1,6 +1,25 @@
 # lib-ml
 
-`lib-ml` is a Python library designed for preprocessing text data, especially tailored for machine learning applications. The library offers robust tools for tokenization, sequence padding, and label encoding, ensuring that text data is optimally prepared for model training and analysis. The library is available on PyPI and can be easily integrated into your projects.
+`lib-ml` is a Python library designed for preprocessing text data, especially tailored for machine learning applications. The library offers robust tools for tokenization, sequence padding, and label encoding, ensuring that text data is optimally prepared for model training and analysis. The library is available on PyPI and can be easily integrated into your projects. New releases are automatically created and pushed to PyPI with every push to main.
+
+##  Repository Structure
+
+```sh
+└── lib-ml/
+    ├── .github
+    │   └── workflows
+    ├── LICENSE
+    ├── README.md
+    ├── dist
+    │   ├── lib_ml_group3-0.2.0-py3-none-any.whl
+    │   └── lib_ml_group3-0.2.0.tar.gz
+    ├── lib_ml_group3
+    │   ├── __init__.py
+    │   ├── load_model.py
+    │   └── preprocessing.py
+    ├── poetry.lock
+    └── pyproject.toml
+```
 
 ## Installation
 

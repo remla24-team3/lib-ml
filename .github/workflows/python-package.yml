@@ -23,110 +23,110 @@ jobs:
       actions: write
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.head_ref }}
-        token: ${{ secrets.GITHUB_TOKEN }} 
-    
-    - name: Extract version information
-        id: vars
-        run: |
-          CURRENT_TAG=$((git tag -l --sort=-v:refname | head -n 1) || echo "v0.0.0")
-          CURRENT_TAG=${CURRENT_TAG#v}
-          IFS='.' read -ra ADDR <<< "$CURRENT_TAG"
-          
-          PATCH=$((ADDR[2] + 1))
-          VERSION="${ADDR[0]}.${ADDR[1]}.$PATCH"
-          
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            VERSION="v$VERSION"
-          elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
-            VERSION="v$VERSION"
-          elif [[ "${GITHUB_REF}" == refs/heads/beta/* ]]; then
-            VERSION="v$VERSION-beta-$(date +%Y%m%d)"
-          else
-            VERSION="v$VERSION"
-          fi
-          
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }} 
       
-    - name: Create release
+      - name: Extract version information
+          id: vars
+          run: |
+            CURRENT_TAG=$((git tag -l --sort=-v:refname | head -n 1) || echo "v0.0.0")
+            CURRENT_TAG=${CURRENT_TAG#v}
+            IFS='.' read -ra ADDR <<< "$CURRENT_TAG"
+            
+            PATCH=$((ADDR[2] + 1))
+            VERSION="${ADDR[0]}.${ADDR[1]}.$PATCH"
+            
+            if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+              VERSION="v$VERSION"
+            elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
+              VERSION="v$VERSION"
+            elif [[ "${GITHUB_REF}" == refs/heads/beta/* ]]; then
+              VERSION="v$VERSION-beta-$(date +%Y%m%d)"
+            else
+              VERSION="v$VERSION"
+            fi
+            
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+        
+      - name: Create release
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            VERSION: ${{ env.VERSION }}
+            REPO: ${{ github.repository }}
+          run: |
+            IS_PRERELEASE=false
+            if [[ $VERSION == *-* ]]; then
+              IS_PRERELEASE=true
+            fi
+            gh release create "$VERSION" \
+                --repo="$REPO" \
+                --title="${REPO#*/} ${VERSION#v}" \
+                --generate-notes \
+                $([[ $IS_PRERELEASE == true ]] && echo "--prerelease")
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python -
+
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create false
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Analysing the code with pylint
+        run: |
+          pylint $(git ls-files '*.py')
+
+      - name: Analysing the code with Flake8
+        run: |
+          flake8 .
+
+      - name: Check if version exists on PyPI
+        id: check-version
+        run: |
+          CURRENT_VERSION=${{ env.VERSION }}
+          if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
+            echo "Version $CURRENT_VERSION already exists on PyPI."
+            echo "::set-output name=exists::true"
+          else
+            echo "Version $CURRENT_VERSION does not exist on PyPI."
+            echo "::set-output name=exists::false"
+          fi
+
+      - name: Bump version and tag
+        if: steps.check-version.outputs.exists == 'false'
+        run: |
+          poetry version patch
+          NEW_VERSION=$(poetry version --short)
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add pyproject.toml
+          git commit -m "Bump version to $NEW_VERSION"
+          git checkout -B "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_THRESHOLD_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ env.VERSION }}
-          REPO: ${{ github.repository }}
+
+      - name: Build and publish to PyPI
+        if: steps.check-version.outputs.exists == 'false'
         run: |
-          IS_PRERELEASE=false
-          if [[ $VERSION == *-* ]]; then
-            IS_PRERELEASE=true
-          fi
-          gh release create "$VERSION" \
-              --repo="$REPO" \
-              --title="${REPO#*/} ${VERSION#v}" \
-              --generate-notes \
-              $([[ $IS_PRERELEASE == true ]] && echo "--prerelease")
+          poetry build
+          poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-
-    - name: Install poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python -
-
-    - name: Configure Poetry
-      run: |
-        poetry config virtualenvs.create false
-
-    - name: Install dependencies
-      run: |
-        poetry install
-
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
-
-    - name: Analysing the code with Flake8
-      run: |
-        flake8 .
-
-    - name: Check if version exists on PyPI
-      id: check-version
-      run: |
-        CURRENT_VERSION=${{ env.VERSION }}
-        if curl --silent --output /dev/null --fail "https://pypi.org/project/lib-ml-group3/$CURRENT_VERSION/"; then
-          echo "Version $CURRENT_VERSION already exists on PyPI."
-          echo "::set-output name=exists::true"
-        else
-          echo "Version $CURRENT_VERSION does not exist on PyPI."
-          echo "::set-output name=exists::false"
-        fi
-
-    - name: Bump version and tag
-      if: steps.check-version.outputs.exists == 'false'
-      run: |
-        poetry version patch
-        NEW_VERSION=$(poetry version --short)
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add pyproject.toml
-        git commit -m "Bump version to $NEW_VERSION"
-        git checkout -B "${{ github.ref_name }}"
-        git push origin "${{ github.ref_name }}"
-        git tag "v$NEW_VERSION"
-        git push origin "v$NEW_THRESHOLD_VERSION"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build and publish to PyPI
-      if: steps.check-version.outputs.exists == 'false'
-      run: |
-        poetry build
-        poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
-
-    - name: Clean up
-      if: always()
-      run: |
-        rm -rf dist
+      - name: Clean up
+        if: always()
+        run: |
+          rm -rf dist
